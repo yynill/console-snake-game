@@ -53,14 +53,11 @@ int main()
     setup_terminal();
 
     // Game variables
-    int x = COLS / 2;
-    int y = ROWS / 2;
-    int x_vel = 1;
-    int y_vel = 0;
+    int x = COLS / 2, y = ROWS / 2;
+    int x_vel = 1, y_vel = 0;
     int appleX, appleY;
-    int running = 1;
-    int newApple = 1;
-    Position snake[COLS * ROWS];
+    int running = 1, newApple = 1, snakeLength = 1;
+    Position body[COLS * ROWS];
 
     while (running)
     {
@@ -77,8 +74,18 @@ int main()
             printf("│");
             for (int i = 0; i < COLS; i++)
             {
+                for (int k = 0; k < snakeLength; k++)
+                {
+                    if (body[k].x == i && body[k].y == j)
+                    {
+                        printf("░"); // Print the snake body part
+                        break;
+                    }
+                }
                 if (j == y && i == x)
+                {
                     printf("▓");
+                }
                 else if (j == appleY && i == appleX)
                 {
                     printf("@");
@@ -104,20 +111,28 @@ int main()
         x += x_vel;
         y += y_vel;
 
-        // check for collisions
-        // border
+        // border collisions
         if (x < 0 || x >= COLS || y < 0 || y >= ROWS)
         {
             running = 0; // Set running to 0 to stop the game
         }
 
-        // apple
+        // apple collisions
         if (x == appleX && y == appleY)
         {
+            if (snakeLength < COLS * ROWS)
+            {
+                body[snakeLength - 1].x = x;
+                body[snakeLength - 1].y = y;
+                snakeLength++;
+            }
+            else
+            {
+                printf("You've won the game!");
+                running = 0;
+            }
             newApple = 1;
         }
-
-        // body
 
         // Limit frame rate
         usleep(7 * 1000000 / 60);
@@ -156,14 +171,19 @@ int main()
             }
         }
     }
-
     if (!running)
     {
-        printf("Game Over!");
-    }
-}
+        printf("Game Over!\n");
 
-// Restore original terminal settings before exiting
-restore_terminal(original_settings);
-return 0;
+        // check segments
+        printf("Current snake body:\n");
+        for (int i = 0; i < snakeLength; i++)
+        {
+            printf("Segment %d: (%d, %d)\n", i, body[i].x, body[i].y);
+        }
+    }
+
+    // Restore original terminal settings before exiting
+    restore_terminal(original_settings);
+    return 0;
 }

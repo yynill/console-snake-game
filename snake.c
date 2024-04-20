@@ -74,24 +74,34 @@ int main()
             printf("│");
             for (int i = 0; i < COLS; i++)
             {
-                for (int k = 0; k < snakeLength; k++)
-                {
-                    if (body[k].x == i && body[k].y == j)
-                    {
-                        printf("░"); // Print the snake body part
-                        break;
-                    }
-                }
+                int isSnakeBody = 0; // Flag to check if the current cell is part of the snake body
+
                 if (j == y && i == x)
                 {
-                    printf("▓");
-                }
-                else if (j == appleY && i == appleX)
-                {
-                    printf("@");
+                    printf("▓"); // Snake head
                 }
                 else
-                    printf("·");
+                {
+                    // Check for body segments
+                    for (int k = 0; k < snakeLength; k++)
+                    {
+                        if (body[k].x == i && body[k].y == j)
+                        {
+                            printf("░"); // Print the snake body part
+                            isSnakeBody = 1;
+                            break;
+                        }
+                    }
+
+                    if (!isSnakeBody && j == appleY && i == appleX)
+                    {
+                        printf("@"); //  apple
+                    }
+                    else if (!isSnakeBody)
+                    {
+                        printf("·"); //  empty space
+                    }
+                }
             }
             printf("│\n");
         }

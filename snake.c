@@ -56,14 +56,16 @@ int main()
     int x = COLS / 2, y = ROWS / 2;
     int x_vel = 1, y_vel = 0;
     int appleX, appleY;
-    int running = 1, newApple = 1, snakeLength = 1;
+    int running = 1, newApple = 1, snakeLength = 0;
     Position body[COLS * ROWS];
 
     while (running)
     {
         system("clear");
 
-        // Render game area
+        // Render game
+        printf("Score: %d \n", snakeLength);
+
         printf("┌");
         for (int i = 0; i < COLS; i++)
             printf("─");
@@ -117,14 +119,39 @@ int main()
             newApple = 0;
         }
 
+        int prevX = x, prevY = y;
         // Update head position
         x += x_vel;
         y += y_vel;
 
+        int tempX, tempY;
+
+        // Update body position
+        for (int k = 0; k < snakeLength; k++)
+        {
+            tempX = body[k].x;
+            tempY = body[k].y;
+
+            body[k].x = prevX;
+            body[k].y = prevY;
+
+            prevX = tempX;
+            prevY = tempY;
+        }
+
+        // body collisions
+        for (int k = 0; k < snakeLength; k++)
+        {
+            if (body[k].x == x && body[k].y == y)
+            {
+                running = 0;
+            }
+        }
+
         // border collisions
         if (x < 0 || x >= COLS || y < 0 || y >= ROWS)
         {
-            running = 0; // Set running to 0 to stop the game
+            running = 0;
         }
 
         // apple collisions
@@ -145,7 +172,7 @@ int main()
         }
 
         // Limit frame rate
-        usleep(7 * 1000000 / 60);
+        usleep(6 * 1000000 / 60);
 
         // Handle non-blocking input
         int ch;
@@ -184,13 +211,6 @@ int main()
     if (!running)
     {
         printf("Game Over!\n");
-
-        // check segments
-        printf("Current snake body:\n");
-        for (int i = 0; i < snakeLength; i++)
-        {
-            printf("Segment %d: (%d, %d)\n", i, body[i].x, body[i].y);
-        }
     }
 
     // Restore original terminal settings before exiting

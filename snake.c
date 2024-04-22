@@ -95,9 +95,7 @@ int main()
 
 void setup_terminal(struct termios *original_settings)
 {
-    struct termios new_settings;
-    tcgetattr(STDIN_FILENO, original_settings);
-    new_settings = *original_settings;
+    struct termios new_settings = *original_settings;
     new_settings.c_lflag &= ~(ICANON | ECHO);
     new_settings.c_cc[VMIN] = 0;
     new_settings.c_cc[VTIME] = 0;

@@ -14,46 +14,21 @@ typedef struct
 } Position;
 
 // Function prototypes...
-void setup_terminal();
+void setup_terminal(struct termios *original_settings);
 void restore_terminal(struct termios original_settings);
-void placeApple(int *x, int *y);
-
-// Function to setup terminal attributes for non-canonical mode
-void setup_terminal()
-{
-    struct termios new_settings;
-    tcgetattr(STDIN_FILENO, &new_settings);
-    new_settings.c_lflag &= ~(ICANON | ECHO); // Disable canonical mode and echo
-    new_settings.c_cc[VMIN] = 0;
-    new_settings.c_cc[VTIME] = 0;
-    tcsetattr(STDIN_FILENO, TCSANOW, &new_settings);
-}
-
-// Function to restore original terminal settings
-void restore_terminal(struct termios original_settings)
-{
-    tcsetattr(STDIN_FILENO, TCSANOW, &original_settings);
-}
-
-void placeApple(int *x, int *y)
-{
-    int min = 1;
-
-    *x = min + rand() % (COLS - min + 1);
-    *y = min + rand() % (ROWS - min + 1);
-}
+void placeApple(int *x, int *y, Position *body, int length);
+void render_game(int appleX, int appleY, Position *body, int snakeLength, int headX, int headY);
+void updateGameState(int *headX, int *headY, int x_vel, int y_vel, int *snakeLength, Position *body, int *appleX, int *appleY, int *newApple, int *running);
 
 int main()
 {
     // Save original terminal settings
     struct termios original_settings;
     tcgetattr(STDIN_FILENO, &original_settings);
-
-    // Set up terminal for non-blocking input
-    setup_terminal();
+    setup_terminal(&original_settings);
 
     // Game variables
-    int x = COLS / 2, y = ROWS / 2;
+    int headX = COLS / 2, headY = ROWS / 2;
     int x_vel = 1, y_vel = 0;
     int appleX, appleY;
     int running = 1, newApple = 1, snakeLength = 0;
@@ -61,115 +36,15 @@ int main()
 
     while (running)
     {
-        system("clear");
+        render_game(appleX, appleY, body, snakeLength, headX, headY);
 
-        // Render game
-        printf("Score: %d \n", snakeLength);
-
-        printf("┌");
-        for (int i = 0; i < COLS; i++)
-            printf("─");
-        printf("┐\n");
-
-        for (int j = 0; j < ROWS; j++)
-        {
-            printf("│");
-            for (int i = 0; i < COLS; i++)
-            {
-                int isSnakeBody = 0; // Flag to check if the current cell is part of the snake body
-
-                if (j == y && i == x)
-                {
-                    printf("▓"); // Snake head
-                }
-                else
-                {
-                    // Check for body segments
-                    for (int k = 0; k < snakeLength; k++)
-                    {
-                        if (body[k].x == i && body[k].y == j)
-                        {
-                            printf("░"); // Print the snake body part
-                            isSnakeBody = 1;
-                            break;
-                        }
-                    }
-
-                    if (!isSnakeBody && j == appleY && i == appleX)
-                    {
-                        printf("@"); //  apple
-                    }
-                    else if (!isSnakeBody)
-                    {
-                        printf("·"); //  empty space
-                    }
-                }
-            }
-            printf("│\n");
-        }
-        printf("└");
-        for (int i = 0; i < COLS; i++)
-            printf("─");
-        printf("┘\n");
-
-        // Update apple position
         if (newApple)
         {
-            placeApple(&appleX, &appleY);
+            placeApple(&appleX, &appleY, body, snakeLength);
             newApple = 0;
         }
 
-        int prevX = x, prevY = y;
-        // Update head position
-        x += x_vel;
-        y += y_vel;
-
-        int tempX, tempY;
-
-        // Update body position
-        for (int k = 0; k < snakeLength; k++)
-        {
-            tempX = body[k].x;
-            tempY = body[k].y;
-
-            body[k].x = prevX;
-            body[k].y = prevY;
-
-            prevX = tempX;
-            prevY = tempY;
-        }
-
-        // body collisions
-        for (int k = 0; k < snakeLength; k++)
-        {
-            if (body[k].x == x && body[k].y == y)
-            {
-                running = 0;
-            }
-        }
-
-        // border collisions
-        if (x < 0 || x >= COLS || y < 0 || y >= ROWS)
-        {
-            running = 0;
-        }
-
-        // apple collisions
-        if (x == appleX && y == appleY)
-        {
-            if (snakeLength < COLS * ROWS)
-            {
-                body[snakeLength - 1].x = x;
-                body[snakeLength - 1].y = y;
-                snakeLength++;
-            }
-            else
-            {
-                printf("You've won the game!");
-                running = 0;
-            }
-            newApple = 1;
-        }
+        updateGameState(&headX, &headY, x_vel, y_vel, &snakeLength, body, &appleX, &appleY, &newApple, &running);
 
         // Limit frame rate
         usleep(6 * 1000000 / 60);
@@ -216,4 +91,158 @@ int main()
     // Restore original terminal settings before exiting
     restore_terminal(original_settings);
     return 0;
+}
+
+void setup_terminal(struct termios *original_settings)
+{
+    struct termios new_settings;
+    tcgetattr(STDIN_FILENO, original_settings);
+    new_settings = *original_settings;
+    new_settings.c_lflag &= ~(ICANON | ECHO);
+    new_settings.c_cc[VMIN] = 0;
+    new_settings.c_cc[VTIME] = 0;
+    tcsetattr(STDIN_FILENO, TCSANOW, &new_settings);
+}
+
+void restore_terminal(struct termios original_settings)
+{
+    tcsetattr(STDIN_FILENO, TCSANOW, &original_settings);
+}
+
+void placeApple(int *x, int *y, Position *body, int length)
+{
+    int isOccupied;
+
+    do
+    {
+        isOccupied = 0;
+        *x = rand() % COLS;
+        *y = rand() % ROWS;
+
+        // Check if the generated position is occupied by the snake's body
+        for (int i = 0; i < length; i++)
+        {
+            if (body[i].x == *x && body[i].y == *y)
+            {
+                isOccupied = 1;
+                break;
+            }
+        }
+    } while (isOccupied);
+}
+
+void render_game(int appleX, int appleY, Position *body, int snakeLength, int headX, int headY)
+{
+    // Clear the screen to redraw the game state
+    printf("\033[H\033[J"); // Clear the screen using ANSI escape codes
+
+    // Print the current score
+    printf("Score: %d\n", snakeLength);
+
+    // Draw the top border
+    printf("┌");
+    for (int i = 0; i < COLS; i++)
+    {
+        printf("─");
+    }
+    printf("┐\n");
+
+    // Draw the game field
+    for (int j = 0; j < ROWS; j++)
+    {
+        printf("│");
+        for (int i = 0; i < COLS; i++)
+        {
+            if (i == headX && j == headY)
+            {
+                printf("▓"); // Snake head
+            }
+            else
+            {
+                int isPrinted = 0;
+                // Check for body segments
+                for (int k = 0; k < snakeLength; k++)
+                {
+                    if (body[k].x == i && body[k].y == j)
+                    {
+                        printf("░"); // Snake body
+                        isPrinted = 1;
+                        break;
+                    }
+                }
+                // Check for apple
+                if (!isPrinted && i == appleX && j == appleY)
+                {
+                    printf("@"); // Apple
+                }
+                else if (!isPrinted)
+                {
+                    printf(" ");
+                }
+            }
+        }
+        printf("│\n");
+    }
+
+    // Draw the bottom border
+    printf("└");
+    for (int i = 0; i < COLS; i++)
+    {
+        printf("─");
+    }
+    printf("┘\n");
+}
+
+void updateGameState(int *headX, int *headY, int x_vel, int y_vel, int *snakeLength, Position *body, int *appleX, int *appleY, int *newApple, int *running)
+{
+    int prevX = *headX, prevY = *headY;
+    // Update head position
+    *headX += x_vel;
+    *headY += y_vel;
+
+    int tempX, tempY;
+
+    // Update body position if snake length is greater than 0
+    for (int k = *snakeLength - 1; k > 0; k--)
+    {
+        body[k] = body[k - 1];
+    }
+    if (*snakeLength > 0)
+    {
+        body[0].x = prevX;
+        body[0].y = prevY;
+    }
+
+    // Check for body collisions
+    for (int k = 1; k < *snakeLength; k++)
+    {
+        if (body[k].x == *headX && body[k].y == *headY)
+        {
+            *running = 0;
+            break;
+        }
+    }
+
+    // Check for border collisions
+    if (*headX < 0 || *headX >= COLS || *headY < 0 || *headY >= ROWS)
+    {
+        *running = 0;
+    }
+
+    // Check for apple collisions
+    if (*headX == *appleX && *headY == *appleY)
+    {
+        if (*snakeLength < COLS * ROWS - 1)
+        {
+            body[*snakeLength].x = *headX; // Grow snake at the new position
+            body[*snakeLength].y = *headY;
+            (*snakeLength)++;
+        }
+        else
+        {
+            printf("You've won the game!\n");
+            *running = 0;
+        }
+        *newApple = 1;
+    }
 }

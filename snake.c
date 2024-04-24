@@ -7,11 +7,7 @@
 #define COLS 60
 #define ROWS 30
 
-typedef struct
-{
-    int x;
-    int y;
-} Position;
+#include "my_structs.h"
 
 void setup_terminal(struct termios *original_settings)
 {

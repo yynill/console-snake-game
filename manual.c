@@ -4,14 +4,7 @@
 #include <termios.h>
 #include <sys/select.h>
 
-#define COLS 60
-#define ROWS 30
-
-typedef struct
-{
-    int x;
-    int y;
-} Position;
+#include "my_structs.h"
 
 void setup_terminal(struct termios *original_settings);
 void restore_terminal(struct termios original_settings);
@@ -21,17 +14,17 @@ void updateGameState(int *headX, int *headY, int x_vel, int y_vel, int *snakeLen
 
 int main()
 {
-    // Save original terminal settings
-    struct termios original_settings;
-    tcgetattr(STDIN_FILENO, &original_settings);
-    setup_terminal(&original_settings);
-
-    // Game variables
+    // game variables
     int headX = COLS / 2, headY = ROWS / 2;
     int x_vel = 1, y_vel = 0;
     int appleX, appleY;
     int running = 1, newApple = 1, snakeLength = 0;
     Position body[COLS * ROWS];
+
+    // Save original terminal settings
+    struct termios original_settings;
+    tcgetattr(STDIN_FILENO, &original_settings);
+    setup_terminal(&original_settings);
 
     while (running)
     {

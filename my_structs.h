@@ -17,6 +17,7 @@ typedef struct Node
 
 typedef struct NodeList
 {
+    char name[100];
     Node nodes[MAX_NODES];
     int size;
 } NodeList;

@@ -52,7 +52,7 @@ void run_aStar(int headX, int headY, int appleX, int appleY, int *x_vel, int *y_
     while (searaching && undiscoveredList.size != 0)
     {
         Node qNode = lowF_Node(&openList);
-        moveNode(&openList, &closedList, qNode); // <-- bug
+        moveNode(&openList, &closedList, qNode); // <-- bug - openList empty after second tick
 
         NodeList successors = generateSuccessor(qNode);
         for (int i = 0; i < successors.size; i++)

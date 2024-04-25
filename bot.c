@@ -11,6 +11,8 @@ void restore_terminal(struct termios original_settings);
 void placeApple(int *x, int *y, Position *body, int length);
 void render_game(int appleX, int appleY, Position *body, int snakeLength, int headX, int headY);
 void updateGameState(int *headX, int *headY, int x_vel, int y_vel, int *snakeLength, Position *body, int *appleX, int *appleY, int *newApple, int *running);
+void init_aStar(int headX, int headY, int appleX, int appleY, int *x_vel, int *y_vel);
+void run_aStar(int headX, int headY, int appleX, int appleY, int *x_vel, int *y_vel);
 
 int main()
 {
@@ -25,6 +27,8 @@ int main()
     struct termios original_settings;
     tcgetattr(STDIN_FILENO, &original_settings);
     setup_terminal(&original_settings);
+
+    init_aStar(headX, headY, appleX, appleY, &x_vel, &y_vel);
 
     while (running)
     {
@@ -41,7 +45,8 @@ int main()
         // Limit frame rate
         usleep(6 * 1000000 / 60);
 
-        // a start
+        run_aStar(headX, headY, appleX, appleY, &x_vel, &y_vel);
+        // should return velocity or update velocity
     }
     if (!running)
     {

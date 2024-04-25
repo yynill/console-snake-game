@@ -39,7 +39,7 @@ For those interested in automating gameplay, you can compile the game with a bot
 Compile the game and bot using the following command:
 
 ```bash
-gcc bot.c snake.c -o snakeBot
+gcc bot.c snake.c a_star.c -o snakeBot
 ```
 
 To run the bot, enter:

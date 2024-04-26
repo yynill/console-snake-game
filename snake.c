@@ -97,7 +97,7 @@ void render_game(int appleX, int appleY, Position *body, int snakeLength, int he
                     {
                         if (bPath.nodes[p].pos.x == i && bPath.nodes[p].pos.y == j)
                         {
-                            printf("."); // Path
+                            printf("*"); // Path
                             isInPath = 1;
                             break;
                         }

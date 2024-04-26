@@ -34,25 +34,22 @@ void init_aStar(int headX, int headY, int appleX, int appleY, int *x_vel, int *y
 
     initializeUndiscoveredList(&undiscoveredList);
 
-    printf("un: %d\n", undiscoveredList.size);
-    printf("op: %d\n", openList.size);
-    printf("cl: %d\n", closedList.size);
-
     startNode = (Node){{headX, headY}, 0, {-1, -1}};
     endNode = (Node){{appleX, appleY}, 0, {-1, -1}};
 
     moveNode(&undiscoveredList, &openList, startNode);
 }
 
-void run_aStar(int headX, int headY, int appleX, int appleY, int *x_vel, int *y_vel)
+NodeList run_aStar(int headX, int headY, int appleX, int appleY, int *x_vel, int *y_vel)
 {
     int searaching = 1;
     Node goalNode;
+    NodeList bPath;
 
     while (searaching && undiscoveredList.size != 0)
     {
         Node qNode = lowF_Node(&openList);
-        moveNode(&openList, &closedList, qNode); // <-- bug - openList empty after second tick
+        moveNode(&openList, &closedList, qNode);
 
         NodeList successors = generateSuccessor(qNode);
         for (int i = 0; i < successors.size; i++)
@@ -72,7 +69,7 @@ void run_aStar(int headX, int headY, int appleX, int appleY, int *x_vel, int *y_
 
     if (!searaching)
     {
-        backtrackingFrom(goalNode);
+        bPath = backtrackingFrom(goalNode);
     }
     else
     {
@@ -84,6 +81,7 @@ void run_aStar(int headX, int headY, int appleX, int appleY, int *x_vel, int *y_
     printf("cl: %d\n", closedList.size);
 
     printf("goal Node: (%d,%d))\n", goalNode.pos.x, goalNode.pos.y);
+    return bPath;
 }
 
 void initializeUndiscoveredList(NodeList *undiscoveredList)
@@ -179,7 +177,7 @@ NodeList generateSuccessor(Node parentNode)
         int newX = parentNode.pos.x + directions[i][0];
         int newY = parentNode.pos.y + directions[i][1];
 
-        Node newNode = {{newX, newY}, 0, {parentNode.pos.x, parentNode.pos.x}};
+        Node newNode = {{newX, newY}, 0, {parentNode.pos.x, parentNode.pos.y}};
 
         // Check if the new position is within bounds
         if (newX >= 0 && newX < COLS && newY >= 0 && newY < ROWS &&

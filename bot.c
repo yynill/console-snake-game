@@ -9,10 +9,10 @@
 void setup_terminal(struct termios *original_settings);
 void restore_terminal(struct termios original_settings);
 void placeApple(int *x, int *y, Position *body, int length);
-void render_game(int appleX, int appleY, Position *body, int snakeLength, int headX, int headY);
+void render_game(int appleX, int appleY, Position *body, int snakeLength, int headX, int headY, NodeList bPath);
 void updateGameState(int *headX, int *headY, int x_vel, int y_vel, int *snakeLength, Position *body, int *appleX, int *appleY, int *newApple, int *running);
 void init_aStar(int headX, int headY, int appleX, int appleY, int *x_vel, int *y_vel);
-void run_aStar(int headX, int headY, int appleX, int appleY, int *x_vel, int *y_vel);
+NodeList run_aStar(int headX, int headY, int appleX, int appleY, int *x_vel, int *y_vel);
 
 int main()
 {
@@ -28,11 +28,9 @@ int main()
     tcgetattr(STDIN_FILENO, &original_settings);
     setup_terminal(&original_settings);
 
-    init_aStar(headX, headY, appleX, appleY, &x_vel, &y_vel);
-
     while (running)
     {
-        render_game(appleX, appleY, body, snakeLength, headX, headY);
+        init_aStar(headX, headY, appleX, appleY, &x_vel, &y_vel);
 
         if (newApple)
         {
@@ -45,8 +43,13 @@ int main()
         // Limit frame rate
         usleep(6 * 1000000 / 60);
 
-        run_aStar(headX, headY, appleX, appleY, &x_vel, &y_vel);
-        // should return velocity or update velocity
+        NodeList bPath = run_aStar(headX, headY, appleX, appleY, &x_vel, &y_vel);
+        for (size_t i = 0; i < bPath.size; i++)
+        {
+            printf("Step %zu: (%d,%d)\n", i, bPath.nodes[i].pos.x, bPath.nodes[i].pos.y);
+        }
+
+        render_game(appleX, appleY, body, snakeLength, headX, headY, bPath);
     }
     if (!running)
     {

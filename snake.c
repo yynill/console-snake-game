@@ -45,7 +45,7 @@ void placeApple(int *x, int *y, Position *body, int length)
     } while (isOccupied);
 }
 
-void render_game(int appleX, int appleY, Position *body, int snakeLength, int headX, int headY)
+void render_game(int appleX, int appleY, Position *body, int snakeLength, int headX, int headY, NodeList bPath)
 {
     // Clear the screen to redraw the game state
     printf("\033[H\033[J"); // Clear the screen using ANSI escape codes
@@ -91,7 +91,21 @@ void render_game(int appleX, int appleY, Position *body, int snakeLength, int he
                 }
                 else if (!isPrinted)
                 {
-                    printf(" ");
+                    // Check if the current position is part of the path
+                    int isInPath = 0;
+                    for (int p = 0; p < bPath.size; p++)
+                    {
+                        if (bPath.nodes[p].pos.x == i && bPath.nodes[p].pos.y == j)
+                        {
+                            printf("."); // Path
+                            isInPath = 1;
+                            break;
+                        }
+                    }
+                    if (!isInPath)
+                    {
+                        printf(" ");
+                    }
                 }
             }
         }

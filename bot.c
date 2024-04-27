@@ -68,65 +68,31 @@ int main()
 // find out if there is a cleaner way than 100000000 if else
 void adjustVelocity(int *x_vel, int *y_vel, int headX, int headY, int appleX, int appleY, NodeList bPath)
 {
-    int nextX = bPath.nodes[0].pos.x;
-    int nextY = bPath.nodes[0].pos.y;
+    int nextX = bPath.nodes[bPath.size - 1].pos.x;
+    int nextY = bPath.nodes[bPath.size - 1].pos.y;
 
-    // Check if the snake is already at one of the neighboring tiles of the apple
-    if ((abs(headX - appleX) == 1 && headY == appleY) ||
-        (abs(headY - appleY) == 1 && headX == appleX))
+    if (nextX == headX && nextY == headY - 1)
     {
-        // Move directly towards the apple
-        if (headY > appleY)
-        {
-            // Move down
-            *x_vel = 0;
-            *y_vel = -1;
-        }
-        else if (headY < appleY)
-        {
-            // Move up
-            *x_vel = 0;
-            *y_vel = 1;
-        }
-        else if (headX < appleX)
-        {
-            // Move left
-            *x_vel = 1;
-            *y_vel = 0;
-        }
-        else if (headX > appleX)
-        {
-            // Move right
-            *x_vel = -1;
-            *y_vel = 0;
-        }
+        // Move up
+        *x_vel = 0;
+        *y_vel = -1;
     }
-    else
+    else if (nextX == headX && nextY == headY + 1)
     {
-        // Continue moving according to the path
-        if (nextY > headY)
-        {
-            // Move down
-            *x_vel = 0;
-            *y_vel = 1;
-        }
-        else if (nextY < headY)
-        {
-            // Move up
-            *x_vel = 0;
-            *y_vel = -1;
-        }
-        else if (nextX < headX)
-        {
-            // Move left
-            *x_vel = -1;
-            *y_vel = 0;
-        }
-        else if (nextX > headX)
-        {
-            // Move right
-            *x_vel = 1;
-            *y_vel = 0;
-        }
+        // Move down
+        *x_vel = 0;
+        *y_vel = 1;
+    }
+    else if (nextX == headX + 1 && nextY == headY)
+    {
+        // Move right
+        *x_vel = 1;
+        *y_vel = 0;
+    }
+    else if (nextX == headX - 1 && nextY == headY)
+    {
+        // Move left
+        *x_vel = -1;
+        *y_vel = 0;
     }
 }

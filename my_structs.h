@@ -13,6 +13,7 @@ typedef struct Node
     Position pos;
     int f_cost;
     Position parent;
+    int isObstacle;
 } Node;
 
 typedef struct NodeList

@@ -13,7 +13,7 @@ void restore_terminal(struct termios original_settings);
 void placeApple(int *x, int *y, Position *body, int length);
 void render_game(int appleX, int appleY, Position *body, int snakeLength, int headX, int headY, NodeList bPath);
 void updateGameState(int *headX, int *headY, int x_vel, int y_vel, int *snakeLength, Position *body, int *appleX, int *appleY, int *newApple, int *running);
-void init_aStar(int headX, int headY, int appleX, int appleY, int *x_vel, int *y_vel, Position body[]);
+void init_aStar(int headX, int headY, int appleX, int appleY, int *x_vel, int *y_vel, Position body[], int snakeLength);
 NodeList run_aStar(int headX, int headY, int appleX, int appleY, int *x_vel, int *y_vel);
 
 void adjustVelocity(int *x_vel, int *y_vel, int headX, int headY, int appleX, int appleY, NodeList bPath);
@@ -40,7 +40,7 @@ int main()
             newApple = 0;
         }
 
-        init_aStar(headX, headY, appleX, appleY, &x_vel, &y_vel, body);
+        init_aStar(headX, headY, appleX, appleY, &x_vel, &y_vel, body, snakeLength);
         NodeList bPath = run_aStar(headX, headY, appleX, appleY, &x_vel, &y_vel);
         for (size_t i = 0; i < bPath.size; i++)
         {

@@ -3,7 +3,7 @@
 #include "my_structs.h"
 #include <string.h>
 
-void initializeUndiscoveredList(NodeList *undiscoveredList);
+void initializeUndiscoveredList(NodeList *undiscoveredList, Position obstacles[], int obstaclesLength);
 void appendNode(NodeList *list, Node newNode);
 void removeNode(NodeList *list, Node node);
 int getNodeIndex(NodeList list, Node node);
@@ -22,7 +22,7 @@ NodeList closedList;
 Node startNode;
 Node endNode;
 
-void init_aStar(int headX, int headY, int appleX, int appleY, int *x_vel, int *y_vel)
+void init_aStar(int headX, int headY, int appleX, int appleY, int *x_vel, int *y_vel, Position body[], int snakeLength)
 {
     undiscoveredList.size = 0;
     openList.size = 0;
@@ -32,7 +32,7 @@ void init_aStar(int headX, int headY, int appleX, int appleY, int *x_vel, int *y
     strcpy(openList.name, "openList");
     strcpy(closedList.name, "closedList");
 
-    initializeUndiscoveredList(&undiscoveredList);
+    initializeUndiscoveredList(&undiscoveredList, body, snakeLength);
 
     startNode = (Node){{headX, headY}, 0, {-1, -1}};
     endNode = (Node){{appleX, appleY}, 0, {-1, -1}};
@@ -42,11 +42,11 @@ void init_aStar(int headX, int headY, int appleX, int appleY, int *x_vel, int *y
 
 NodeList run_aStar(int headX, int headY, int appleX, int appleY, int *x_vel, int *y_vel)
 {
-    int searaching = 1;
+    int searching = 1;
     Node goalNode;
     NodeList bPath;
 
-    while (searaching && undiscoveredList.size != 0)
+    while (searching && undiscoveredList.size != 0)
     {
         Node qNode = lowF_Node(&openList);
         moveNode(&openList, &closedList, qNode);
@@ -58,7 +58,7 @@ NodeList run_aStar(int headX, int headY, int appleX, int appleY, int *x_vel, int
             if (successors.nodes[i].pos.x == endNode.pos.x &&
                 successors.nodes[i].pos.y == endNode.pos.y)
             {
-                searaching = 0;
+                searching = 0;
                 goalNode = successors.nodes[i];
                 break;
             }
@@ -67,7 +67,7 @@ NodeList run_aStar(int headX, int headY, int appleX, int appleY, int *x_vel, int
         }
     }
 
-    if (!searaching)
+    if (!searching)
     {
         bPath = backtrackingFrom(goalNode);
     }
@@ -84,13 +84,23 @@ NodeList run_aStar(int headX, int headY, int appleX, int appleY, int *x_vel, int
     return bPath;
 }
 
-void initializeUndiscoveredList(NodeList *undiscoveredList)
+void initializeUndiscoveredList(NodeList *undiscoveredList, Position obstacles[], int obstaclesLength)
 {
     for (int y = 0; y < ROWS; y++)
     {
         for (int x = 0; x < COLS; x++)
         {
-            Node newNode = {{x, y}, 0, {-1, -1}};
+            int isObstacle = 0;
+            // Check if the current position is in the obstacle list
+            for (int i = 0; i < obstaclesLength; i++)
+            {
+                if (obstacles[i].x == x && obstacles[i].y == y)
+                {
+                    isObstacle = 1; // Mark the current position as an obstacle
+                    break;
+                }
+            }
+            Node newNode = {{x, y}, 0, {-1, -1}, isObstacle};
             appendNode(undiscoveredList, newNode);
         }
     }
@@ -181,7 +191,8 @@ NodeList generateSuccessor(Node parentNode)
 
         // Check if the new position is within bounds
         if (newX >= 0 && newX < COLS && newY >= 0 && newY < ROWS &&
-            getNodeIndex(undiscoveredList, newNode) != -1)
+            getNodeIndex(undiscoveredList, newNode) != -1 &&
+            undiscoveredList.nodes[getNodeIndex(undiscoveredList, newNode)].isObstacle == 0)
         {
             appendNode(&successors, newNode);
         }
